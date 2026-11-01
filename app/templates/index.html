@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block titulo %}Doações · Doações Comunitárias{% endblock %}
+{% block conteudo %}
+<h2>Registrar doação</h2>
+<form id="form-doacao" novalidate>
+  <div class="campo">
+    <label for="item">Item <span aria-hidden="true">*</span></label>
+    <input id="item" name="item" required maxlength="80" aria-describedby="erro-item" autocomplete="off">
+    <span id="erro-item" class="erro"></span>
+  </div>
+  <div class="campo">
+    <label for="categoria">Categoria <span aria-hidden="true">*</span></label>
+    <select id="categoria" name="categoria" required aria-describedby="erro-categoria">
+      <option value="alimento">Alimento</option>
+      <option value="higiene">Higiene</option>
+      <option value="vestuario">Vestuário</option>
+      <option value="outros">Outros</option>
+    </select>
+    <span id="erro-categoria" class="erro"></span>
+  </div>
+  <div class="campo">
+    <label for="quantidade">Quantidade <span aria-hidden="true">*</span></label>
+    <input id="quantidade" name="quantidade" type="number" min="1" max="100000" required aria-describedby="erro-quantidade">
+    <span id="erro-quantidade" class="erro"></span>
+  </div>
+  <div class="campo">
+    <label for="doador">Nome do doador (opcional)</label>
+    <input id="doador" name="doador" maxlength="80" aria-describedby="erro-doador" autocomplete="name">
+    <span id="erro-doador" class="erro"></span>
+  </div>
+  <div class="campo">
+    <label for="cep">CEP (opcional)</label>
+    <input id="cep" name="cep" inputmode="numeric" maxlength="9" aria-describedby="erro-cep" autocomplete="postal-code">
+    <span id="erro-cep" class="erro"></span>
+  </div>
+  <button type="submit">Registrar doação</button>
+</form>
+
+<h2>Doações registradas</h2>
+<form id="form-filtro" class="filtro" role="search" aria-label="Filtrar doações">
+  <label for="filtro-q">Buscar</label>
+  <input id="filtro-q" type="search" placeholder="Item ou doador">
+  <label for="filtro-cat">Categoria</label>
+  <select id="filtro-cat">
+    <option value="">Todas</option>
+    <option value="alimento">Alimento</option>
+    <option value="higiene">Higiene</option>
+    <option value="vestuario">Vestuário</option>
+    <option value="outros">Outros</option>
+  </select>
+  <button type="submit">Filtrar</button>
+</form>
+<div class="tabela-wrap" role="region" aria-labelledby="titulo-tabela" tabindex="0">
+  <table>
+    <caption id="titulo-tabela">Lista de doações</caption>
+    <thead>
+      <tr><th scope="col">Item</th><th scope="col">Categoria</th><th scope="col">Qtd.</th>
+          <th scope="col">Doador</th><th scope="col">Local</th><th scope="col">Data</th><th scope="col">Ações</th></tr>
+    </thead>
+    <tbody id="corpo-tabela"></tbody>
+  </table>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/doacoes.js') }}"></script>{% endblock %}
