@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block titulo %}Avaliar o sistema · Doações Comunitárias{% endblock %}
+{% block conteudo %}
+<h2>Avalie o sistema</h2>
+<p>Sua opinião orienta as melhorias da próxima versão.</p>
+<form id="form-feedback" novalidate>
+  <fieldset aria-describedby="erro-nota">
+    <legend>Nota geral <span aria-hidden="true">*</span></legend>
+    {% for n in range(1, 6) %}
+    <label><input type="radio" name="nota" value="{{ n }}"> {{ n }}{% if n == 1 %} (ruim){% elif n == 5 %} (ótimo){% endif %}</label><br>
+    {% endfor %}
+    <span id="erro-nota" class="erro"></span>
+  </fieldset>
+  <div class="campo">
+    <label for="perfil">Você é <span aria-hidden="true">*</span></label>
+    <select id="perfil" name="perfil" aria-describedby="erro-perfil">
+      <option value="doador">Doador</option>
+      <option value="voluntario">Voluntário</option>
+      <option value="coordenador">Coordenador</option>
+    </select>
+    <span id="erro-perfil" class="erro"></span>
+  </div>
+  <div class="campo">
+    <label for="comentario">Comentário (opcional, até 500 caracteres)</label>
+    <textarea id="comentario" name="comentario" rows="4" maxlength="500" aria-describedby="erro-comentario"></textarea>
+    <span id="erro-comentario" class="erro"></span>
+  </div>
+  <button type="submit">Enviar avaliação</button>
+</form>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/feedback.js') }}"></script>{% endblock %}

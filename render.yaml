@@ -1,0 +1,14 @@
+# Deploy na nuvem (Render.com): conecte o repositório do GitHub e aplique este blueprint.
+services:
+  - type: web
+    name: doacoes-comunitarias
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn wsgi:app
+    healthCheckPath: /api/saude
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.3
+      - key: DATABASE_PATH
+        value: /tmp/doacoes.sqlite   # plano gratuito: disco temporário (ok para demonstração)

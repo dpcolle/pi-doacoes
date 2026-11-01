@@ -57,3 +57,28 @@ def validar_doacao(dados):
         "cidade": cidade or None,
         "uf": uf or None,
     }, {}
+
+
+PERFIS = ("doador", "voluntario", "coordenador")
+
+
+def validar_feedback(dados):
+    if not isinstance(dados, dict):
+        return None, {"corpo": "Envie um objeto JSON válido."}
+    erros = {}
+    try:
+        nota = int(dados.get("nota"))
+        if isinstance(dados.get("nota"), bool) or not 1 <= nota <= 5:
+            raise ValueError
+    except (TypeError, ValueError):
+        nota = None
+        erros["nota"] = "Escolha uma nota de 1 a 5."
+    perfil = _texto(dados.get("perfil")).lower()
+    if perfil not in PERFIS:
+        erros["perfil"] = "Escolha: " + ", ".join(PERFIS) + "."
+    comentario = _texto(dados.get("comentario"))
+    if len(comentario) > 500:
+        erros["comentario"] = "Use até 500 caracteres."
+    if erros:
+        return None, erros
+    return {"nota": nota, "perfil": perfil, "comentario": comentario or None}, {}

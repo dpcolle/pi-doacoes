@@ -9,3 +9,12 @@ CREATE TABLE IF NOT EXISTS doacoes (
     uf         TEXT,
     criado_em  TEXT    NOT NULL DEFAULT (datetime('now'))
 );
+
+CREATE TABLE IF NOT EXISTS feedbacks (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    nota       INTEGER NOT NULL CHECK (nota BETWEEN 1 AND 5),
+    perfil     TEXT    NOT NULL CHECK (perfil IN ('doador','voluntario','coordenador')),
+    comentario TEXT,
+    versao     TEXT    NOT NULL,
+    criado_em  TEXT    NOT NULL DEFAULT (datetime('now'))
+);

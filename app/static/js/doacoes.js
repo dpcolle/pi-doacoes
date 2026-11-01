@@ -83,4 +83,17 @@ document.getElementById("form-filtro").addEventListener("submit", (ev) => {
   carregar();
 });
 
+document.getElementById("cep").addEventListener("blur", async (ev) => {
+  const cep = ev.target.value.replace(/\D/g, "");
+  if (cep.length !== 8) return;
+  try {
+    const dados = await api("/api/cep/" + cep);
+    form.elements.cidade.value = dados.cidade;
+    form.elements.uf.value = dados.uf;
+    avisar(`CEP encontrado: ${dados.cidade}/${dados.uf}.`);
+  } catch (e) {
+    avisar(e.message, "erro");
+  }
+});
+
 carregar();

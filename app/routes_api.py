@@ -1,8 +1,10 @@
 """API REST própria do sistema (JSON)."""
 from flask import Blueprint, current_app, jsonify, request
 
+from . import analytics
+from .cep import CepErro, buscar_cep
 from .db import get_db
-from .validators import validar_doacao
+from .validators import validar_doacao, validar_feedback
 
 bp = Blueprint("api", __name__, url_prefix="/api")
 
@@ -92,3 +94,46 @@ def remover(doacao_id):
     banco.execute("DELETE FROM doacoes WHERE id = ?", (doacao_id,))
     banco.commit()
     return "", 204
+
+
+# ---- v2: API externa (ViaCEP) -------------------------------------------------
+@bp.get("/cep/<cep>")
+def consultar_cep(cep):
+    try:
+        return jsonify(buscar_cep(cep, current_app.config.get("CEP_CONSULTOR")))
+    except CepErro as e:
+        return _erro(e.mensagem, e.status)
+
+
+# ---- v2: feedback da comunidade ----------------------------------------------
+@bp.post("/feedbacks")
+def criar_feedback():
+    dados, erros = validar_feedback(request.get_json(silent=True))
+    if erros:
+        return _erro("Dados inválidos.", 400, erros)
+    banco = get_db()
+    cur = banco.execute(
+        "INSERT INTO feedbacks (nota, perfil, comentario, versao) VALUES (:nota, :perfil, :comentario, :versao)",
+        {**dados, "versao": current_app.config["VERSAO"]},
+    )
+    banco.commit()
+    linha = banco.execute("SELECT * FROM feedbacks WHERE id = ?", (cur.lastrowid,)).fetchone()
+    return jsonify(dict(linha)), 201
+
+
+@bp.get("/feedbacks")
+def listar_feedbacks():
+    linhas = get_db().execute("SELECT * FROM feedbacks ORDER BY id DESC").fetchall()
+    return jsonify([dict(l) for l in linhas])
+
+
+# ---- v2: análise de dados -----------------------------------------------------
+@bp.get("/estatisticas")
+def estatisticas():
+    banco = get_db()
+    doacoes = [dict(l) for l in banco.execute("SELECT * FROM doacoes")]
+    feedbacks = [dict(l) for l in banco.execute("SELECT * FROM feedbacks")]
+    return jsonify({
+        "doacoes": analytics.resumir_doacoes(doacoes),
+        "feedbacks": analytics.resumir_feedbacks(feedbacks),
+    })

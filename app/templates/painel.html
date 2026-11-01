@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block titulo %}Painel · Doações Comunitárias{% endblock %}
+{% block conteudo %}
+<h2>Painel de indicadores</h2>
+<section aria-labelledby="t-resumo">
+  <h3 id="t-resumo">Resumo</h3>
+  <div class="grade">
+    <div class="cartao"><p>Doações registradas</p><p class="valor" id="k-registros">–</p></div>
+    <div class="cartao"><p>Itens recebidos</p><p class="valor" id="k-itens">–</p></div>
+    <div class="cartao"><p>Média por doação</p><p class="valor" id="k-media">–</p></div>
+    <div class="cartao"><p>Satisfação (nota 4 ou 5)</p><p class="valor" id="k-satisf">–</p></div>
+  </div>
+</section>
+<section aria-labelledby="t-grafico">
+  <h3 id="t-grafico">Itens recebidos por categoria</h3>
+  <div id="grafico"></div>
+  <div class="tabela-wrap" role="region" aria-labelledby="cap-cat" tabindex="0">
+    <table>
+      <caption id="cap-cat">Dados do gráfico em formato de tabela</caption>
+      <thead><tr><th scope="col">Categoria</th><th scope="col">Itens</th></tr></thead>
+      <tbody id="tab-categorias"></tbody>
+    </table>
+  </div>
+</section>
+<section aria-labelledby="t-cidades">
+  <h3 id="t-cidades">Cidades com mais doações</h3>
+  <ol id="lista-cidades"></ol>
+</section>
+<section aria-labelledby="t-notas">
+  <h3 id="t-notas">Avaliações da comunidade</h3>
+  <p id="resumo-notas"></p>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/painel.js') }}"></script>{% endblock %}
