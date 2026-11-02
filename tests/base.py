@@ -11,7 +11,8 @@ class BaseTestCase(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.app = create_app(
-            {"TESTING": True, "DATABASE": os.path.join(self.tmp.name, "teste.sqlite")}
+            {"TESTING": True, "DATABASE": os.path.join(self.tmp.name, "teste.sqlite"),
+             "DATABASE_URL": None}  # nunca usar o banco de produção nos testes
         )
         self.client = self.app.test_client()
 

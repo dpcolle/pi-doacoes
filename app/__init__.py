@@ -14,13 +14,15 @@ def create_app(config=None):
         DATABASE=os.environ.get(
             "DATABASE_PATH", os.path.join(app.instance_path, "doacoes.sqlite")
         ),
+        DATABASE_URL=os.environ.get("DATABASE_URL"),  # PostgreSQL (Neon); vazio = SQLite
         VERSAO=__version__,
     )
     app.json.ensure_ascii = False
     if config:
         app.config.update(config)
 
-    os.makedirs(os.path.dirname(os.path.abspath(app.config["DATABASE"])), exist_ok=True)
+    if not app.config["DATABASE_URL"]:
+        os.makedirs(os.path.dirname(os.path.abspath(app.config["DATABASE"])), exist_ok=True)
     app.teardown_appcontext(db.close_db)
     with app.app_context():
         db.init_db()

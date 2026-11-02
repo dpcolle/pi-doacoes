@@ -1,4 +1,4 @@
-# Deploy na nuvem (Render.com): conecte o repositório do GitHub e aplique este blueprint.
+# Deploy na nuvem (Render.com) com banco PostgreSQL no Neon.
 services:
   - type: web
     name: doacoes-comunitarias
@@ -6,9 +6,9 @@ services:
     plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn wsgi:app
-    healthCheckPath: /api/saude
+    healthCheckPath: /api/saude   # não consulta o banco, para o Neon poder suspender
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.3
-      - key: DATABASE_PATH
-        value: /tmp/doacoes.sqlite   # plano gratuito: disco temporário (ok para demonstração)
+      - key: DATABASE_URL
+        sync: false               # cole a connection string do Neon no painel do Render
