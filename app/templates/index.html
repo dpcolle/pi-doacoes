@@ -1,74 +1,84 @@
 {% extends "base.html" %}
-{% block titulo %}Doações · Doações Comunitárias{% endblock %}
+{% block titulo %}Registrar criadouro · Alerta Dengue Comunitário{% endblock %}
+{% set TIPOS = [("pneu","Pneu"),("caixa_dagua","Caixa d'água destampada"),("vaso_planta","Vaso ou pratinho de planta"),
+  ("lixo_entulho","Lixo ou entulho acumulando água"),("piscina","Piscina sem tratamento"),("calha","Calha entupida"),
+  ("terreno","Terreno baldio"),("outros","Outros")] %}
 {% block conteudo %}
-<h2>Registrar doação</h2>
-<form id="form-doacao" novalidate>
+<h2>Registrar possível criadouro do mosquito</h2>
+<p>Viu água parada que pode virar criadouro do <i>Aedes aegypti</i>? Registre o local para a equipe de
+  combate às endemias. <strong>Não pedimos seu nome nem telefone.</strong></p>
+<form id="form-foco" novalidate>
   <div class="campo">
-    <label for="item">Item <span aria-hidden="true">*</span></label>
-    <input id="item" name="item" required maxlength="80" aria-describedby="erro-item" autocomplete="off">
-    <span id="erro-item" class="erro"></span>
-  </div>
-  <div class="campo">
-    <label for="categoria">Categoria <span aria-hidden="true">*</span></label>
-    <select id="categoria" name="categoria" required aria-describedby="erro-categoria">
-      <option value="alimento">Alimento</option>
-      <option value="higiene">Higiene</option>
-      <option value="vestuario">Vestuário</option>
-      <option value="outros">Outros</option>
+    <label for="tipo">Tipo de criadouro <span aria-hidden="true">*</span></label>
+    <select id="tipo" name="tipo" required aria-describedby="erro-tipo">
+      <option value="">Selecione…</option>
+      {% for valor, nome in TIPOS %}<option value="{{ valor }}">{{ nome }}</option>{% endfor %}
     </select>
-    <span id="erro-categoria" class="erro"></span>
+    <span id="erro-tipo" class="erro"></span>
   </div>
   <div class="campo">
-    <label for="quantidade">Quantidade <span aria-hidden="true">*</span></label>
-    <input id="quantidade" name="quantidade" type="number" min="1" max="100000" required aria-describedby="erro-quantidade">
-    <span id="erro-quantidade" class="erro"></span>
-  </div>
-  <div class="campo">
-    <label for="doador">Nome do doador (opcional)</label>
-    <input id="doador" name="doador" maxlength="80" aria-describedby="erro-doador" autocomplete="name">
-    <span id="erro-doador" class="erro"></span>
-  </div>
-  <div class="campo">
-    <label for="cep">CEP (opcional)</label>
+    <label for="cep">CEP (preenche rua, bairro e cidade)</label>
     <input id="cep" name="cep" inputmode="numeric" maxlength="9" aria-describedby="erro-cep" autocomplete="postal-code">
     <span id="erro-cep" class="erro"></span>
   </div>
   <div class="campo">
-    <label for="cidade">Cidade (preenchida pelo CEP)</label>
-    <input id="cidade" name="cidade" maxlength="80" aria-describedby="erro-cidade">
+    <label for="logradouro">Rua <span aria-hidden="true">*</span></label>
+    <input id="logradouro" name="logradouro" required maxlength="120" aria-describedby="erro-logradouro" autocomplete="address-line1">
+    <span id="erro-logradouro" class="erro"></span>
+  </div>
+  <div class="campo">
+    <label for="numero">Número ou ponto de referência</label>
+    <input id="numero" name="numero" maxlength="10" aria-describedby="erro-numero">
+    <span id="erro-numero" class="erro"></span>
+  </div>
+  <div class="campo">
+    <label for="bairro">Bairro <span aria-hidden="true">*</span></label>
+    <input id="bairro" name="bairro" required maxlength="80" aria-describedby="erro-bairro">
+    <span id="erro-bairro" class="erro"></span>
+  </div>
+  <div class="campo">
+    <label for="cidade">Cidade</label>
+    <input id="cidade" name="cidade" maxlength="80" aria-describedby="erro-cidade" autocomplete="address-level2">
     <span id="erro-cidade" class="erro"></span>
   </div>
   <div class="campo">
     <label for="uf">UF</label>
-    <input id="uf" name="uf" maxlength="2" aria-describedby="erro-uf">
+    <input id="uf" name="uf" maxlength="2" aria-describedby="erro-uf" autocomplete="address-level1">
     <span id="erro-uf" class="erro"></span>
   </div>
-  <button type="submit">Registrar doação</button>
+  <div class="campo">
+    <label for="descricao">Descrição (opcional, até 300 caracteres)</label>
+    <textarea id="descricao" name="descricao" rows="3" maxlength="300" aria-describedby="erro-descricao"
+      placeholder="Ex.: pneus no quintal dos fundos, visíveis da calçada"></textarea>
+    <span id="erro-descricao" class="erro"></span>
+  </div>
+  <button type="submit">Registrar</button>
 </form>
 
-<h2>Doações registradas</h2>
-<form id="form-filtro" class="filtro" role="search" aria-label="Filtrar doações">
+<h2>Registros</h2>
+<p>Agentes de endemias: atualizem a situação de cada local depois da vistoria.</p>
+<form id="form-filtro" class="filtro" role="search" aria-label="Filtrar registros">
   <label for="filtro-q">Buscar</label>
-  <input id="filtro-q" type="search" placeholder="Item ou doador">
-  <label for="filtro-cat">Categoria</label>
-  <select id="filtro-cat">
+  <input id="filtro-q" type="search" placeholder="Rua ou bairro">
+  <label for="filtro-status">Situação</label>
+  <select id="filtro-status">
     <option value="">Todas</option>
-    <option value="alimento">Alimento</option>
-    <option value="higiene">Higiene</option>
-    <option value="vestuario">Vestuário</option>
-    <option value="outros">Outros</option>
+    <option value="aberto">Aberto</option>
+    <option value="vistoriado">Vistoriado</option>
+    <option value="eliminado">Eliminado</option>
   </select>
   <button type="submit">Filtrar</button>
 </form>
 <div class="tabela-wrap" role="region" aria-labelledby="titulo-tabela" tabindex="0">
   <table>
-    <caption id="titulo-tabela">Lista de doações</caption>
+    <caption id="titulo-tabela">Possíveis criadouros registrados</caption>
     <thead>
-      <tr><th scope="col">Item</th><th scope="col">Categoria</th><th scope="col">Qtd.</th>
-          <th scope="col">Doador</th><th scope="col">Local</th><th scope="col">Data</th><th scope="col">Ações</th></tr>
+      <tr><th scope="col">Tipo</th><th scope="col">Endereço</th><th scope="col">Bairro</th>
+          <th scope="col">Registrado em</th><th scope="col">Situação</th><th scope="col">Ações</th></tr>
     </thead>
     <tbody id="corpo-tabela"></tbody>
   </table>
 </div>
+<script id="tipos-json" type="application/json">{{ TIPOS | tojson }}</script>
 {% endblock %}
-{% block scripts %}<script src="{{ url_for('static', filename='js/doacoes.js') }}"></script>{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/focos.js') }}"></script>{% endblock %}

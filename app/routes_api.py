@@ -4,9 +4,13 @@ from flask import Blueprint, current_app, jsonify, request
 from . import analytics
 from .cep import CepErro, buscar_cep
 from .db import get_db
-from .validators import validar_doacao, validar_feedback
+from .infodengue import InfoDengueErro, buscar_situacao
+from .validators import validar_avaliacao, validar_foco, validar_status
 
 bp = Blueprint("api", __name__, url_prefix="/api")
+
+_AGORA = {"sqlite": "datetime('now')",
+          "postgres": "to_char(now() AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS')"}
 
 
 def _erro(mensagem, status, detalhes=None):
@@ -16,8 +20,8 @@ def _erro(mensagem, status, detalhes=None):
     return jsonify(corpo), status
 
 
-def _buscar(doacao_id):
-    return get_db().execute("SELECT * FROM doacoes WHERE id = :id", {"id": doacao_id}).fetchone()
+def _buscar(foco_id):
+    return get_db().execute("SELECT * FROM focos WHERE id = :id", {"id": foco_id}).fetchone()
 
 
 @bp.get("/saude")
@@ -36,77 +40,97 @@ def saude():
     return jsonify(resposta)
 
 
-@bp.get("/doacoes")
+# ---- Focos (possíveis criadouros) ---------------------------------------------
+@bp.get("/focos")
 def listar():
-    sql, params = "SELECT * FROM doacoes WHERE 1=1", {}
-    categoria = request.args.get("categoria", "").strip().lower()
+    sql, params = "SELECT * FROM focos WHERE 1=1", {}
+    for campo in ("status", "tipo"):
+        valor = request.args.get(campo, "").strip().lower()
+        if valor:
+            sql += f" AND {campo} = :{campo}"  # nome da coluna vem da lista fixa acima
+            params[campo] = valor
     busca = request.args.get("q", "").strip().lower()
-    if categoria:
-        sql += " AND categoria = :categoria"
-        params["categoria"] = categoria
     if busca:
         # LOWER(...) torna a busca sem diferenciar maiúsculas tanto no SQLite quanto no PostgreSQL
-        sql += " AND (LOWER(item) LIKE :busca OR LOWER(doador) LIKE :busca)"
+        sql += " AND (LOWER(bairro) LIKE :busca OR LOWER(logradouro) LIKE :busca)"
         params["busca"] = f"%{busca}%"
     sql += " ORDER BY id DESC"
     linhas = get_db().execute(sql, params).fetchall()
     return jsonify([dict(l) for l in linhas])
 
 
-@bp.post("/doacoes")
+@bp.post("/focos")
 def criar():
-    dados, erros = validar_doacao(request.get_json(silent=True))
+    dados, erros = validar_foco(request.get_json(silent=True))
     if erros:
         return _erro("Dados inválidos.", 400, erros)
     banco = get_db()
     linha = banco.execute(
-        "INSERT INTO doacoes (item, categoria, quantidade, doador, cep, cidade, uf) "
-        "VALUES (:item, :categoria, :quantidade, :doador, :cep, :cidade, :uf) RETURNING *",
+        "INSERT INTO focos (tipo, descricao, logradouro, numero, bairro, cep, cidade, uf) "
+        "VALUES (:tipo, :descricao, :logradouro, :numero, :bairro, :cep, :cidade, :uf) RETURNING *",
         dados,
     ).fetchone()
     banco.commit()
     resposta = jsonify(dict(linha))
     resposta.status_code = 201
-    resposta.headers["Location"] = f"/api/doacoes/{linha['id']}"
+    resposta.headers["Location"] = f"/api/focos/{linha['id']}"
     return resposta
 
 
-@bp.get("/doacoes/<int:doacao_id>")
-def detalhar(doacao_id):
-    linha = _buscar(doacao_id)
+@bp.get("/focos/<int:foco_id>")
+def detalhar(foco_id):
+    linha = _buscar(foco_id)
     if linha is None:
-        return _erro("Doação não encontrada.", 404)
+        return _erro("Registro não encontrado.", 404)
     return jsonify(dict(linha))
 
 
-@bp.put("/doacoes/<int:doacao_id>")
-def atualizar(doacao_id):
-    if _buscar(doacao_id) is None:
-        return _erro("Doação não encontrada.", 404)
-    dados, erros = validar_doacao(request.get_json(silent=True))
+@bp.put("/focos/<int:foco_id>")
+def atualizar(foco_id):
+    if _buscar(foco_id) is None:
+        return _erro("Registro não encontrado.", 404)
+    dados, erros = validar_foco(request.get_json(silent=True))
     if erros:
         return _erro("Dados inválidos.", 400, erros)
     banco = get_db()
     banco.execute(
-        "UPDATE doacoes SET item=:item, categoria=:categoria, quantidade=:quantidade, "
-        "doador=:doador, cep=:cep, cidade=:cidade, uf=:uf WHERE id=:id",
-        {**dados, "id": doacao_id},
+        "UPDATE focos SET tipo=:tipo, descricao=:descricao, logradouro=:logradouro, numero=:numero, "
+        f"bairro=:bairro, cep=:cep, cidade=:cidade, uf=:uf, atualizado_em={_AGORA[banco.dialeto]} "
+        "WHERE id=:id",
+        {**dados, "id": foco_id},
     )
     banco.commit()
-    return jsonify(dict(_buscar(doacao_id)))
+    return jsonify(dict(_buscar(foco_id)))
 
 
-@bp.delete("/doacoes/<int:doacao_id>")
-def remover(doacao_id):
-    if _buscar(doacao_id) is None:
-        return _erro("Doação não encontrada.", 404)
+@bp.patch("/focos/<int:foco_id>/status")
+def mudar_status(foco_id):
+    """Usado pelo agente de endemias: aberto -> vistoriado -> eliminado."""
+    if _buscar(foco_id) is None:
+        return _erro("Registro não encontrado.", 404)
+    status, erros = validar_status(request.get_json(silent=True))
+    if erros:
+        return _erro("Dados inválidos.", 400, erros)
     banco = get_db()
-    banco.execute("DELETE FROM doacoes WHERE id = :id", {"id": doacao_id})
+    banco.execute(
+        f"UPDATE focos SET status=:status, atualizado_em={_AGORA[banco.dialeto]} WHERE id=:id",
+        {"status": status, "id": foco_id},
+    )
+    banco.commit()
+    return jsonify(dict(_buscar(foco_id)))
+
+
+@bp.delete("/focos/<int:foco_id>")
+def remover(foco_id):
+    if _buscar(foco_id) is None:
+        return _erro("Registro não encontrado.", 404)
+    banco = get_db()
+    banco.execute("DELETE FROM focos WHERE id = :id", {"id": foco_id})
     banco.commit()
     return "", 204
 
 
-# ---- v2: API externa (ViaCEP) -------------------------------------------------
+# ---- APIs externas -----------------------------------------------------------
 @bp.get("/cep/<cep>")
 def consultar_cep(cep):
     try:
@@ -115,15 +139,33 @@ def consultar_cep(cep):
         return _erro(e.mensagem, e.status)
 
 
-# ---- v2: feedback da comunidade ----------------------------------------------
-@bp.post("/feedbacks")
-def criar_feedback():
-    dados, erros = validar_feedback(request.get_json(silent=True))
+@bp.get("/municipios")
+def municipios():
+    return jsonify(current_app.config["MUNICIPIOS"])
+
+
+@bp.get("/dengue/<geocode>")
+def situacao_dengue(geocode):
+    consultor = current_app.config.get("INFODENGUE_CONSULTOR")
+    try:
+        dados = buscar_situacao(geocode, consultor, usar_cache=consultor is None)
+    except InfoDengueErro as e:
+        return _erro(e.mensagem, e.status)
+    nomes = {m["geocode"]: m["nome"] for m in current_app.config["MUNICIPIOS"]}
+    return jsonify({**dados, "municipio": nomes.get(dados["geocode"]),
+                    "tendencia": analytics.tendencia_casos(dados["semanas"]),
+                    "fonte": "InfoDengue (Fiocruz/FGV), dados do SINAN"})
+
+
+# ---- Avaliação da comunidade -------------------------------------------------
+@bp.post("/avaliacoes")
+def criar_avaliacao():
+    dados, erros = validar_avaliacao(request.get_json(silent=True))
     if erros:
         return _erro("Dados inválidos.", 400, erros)
     banco = get_db()
     linha = banco.execute(
-        "INSERT INTO feedbacks (nota, perfil, comentario, versao) "
+        "INSERT INTO avaliacoes (nota, perfil, comentario, versao) "
         "VALUES (:nota, :perfil, :comentario, :versao) RETURNING *",
         {**dados, "versao": current_app.config["VERSAO"]},
     ).fetchone()
@@ -131,19 +173,19 @@ def criar_feedback():
     return jsonify(dict(linha)), 201
 
 
-@bp.get("/feedbacks")
-def listar_feedbacks():
-    linhas = get_db().execute("SELECT * FROM feedbacks ORDER BY id DESC").fetchall()
+@bp.get("/avaliacoes")
+def listar_avaliacoes():
+    linhas = get_db().execute("SELECT * FROM avaliacoes ORDER BY id DESC").fetchall()
     return jsonify([dict(l) for l in linhas])
 
 
-# ---- v2: análise de dados -----------------------------------------------------
+# ---- Análise de dados --------------------------------------------------------
 @bp.get("/estatisticas")
 def estatisticas():
     banco = get_db()
-    doacoes = [dict(l) for l in banco.execute("SELECT * FROM doacoes").fetchall()]
-    feedbacks = [dict(l) for l in banco.execute("SELECT * FROM feedbacks").fetchall()]
+    focos = [dict(l) for l in banco.execute("SELECT * FROM focos").fetchall()]
+    avaliacoes = [dict(l) for l in banco.execute("SELECT * FROM avaliacoes").fetchall()]
     return jsonify({
-        "doacoes": analytics.resumir_doacoes(doacoes),
-        "feedbacks": analytics.resumir_feedbacks(feedbacks),
+        "focos": analytics.resumir_focos(focos),
+        "avaliacoes": analytics.resumir_avaliacoes(avaliacoes),
     })

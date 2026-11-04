@@ -25,7 +25,7 @@ Marque cada item quando concluído.
 - [ ] Título que sintetiza o foco — 0,5
 - [ ] **Mais de 3 disciplinas** do curso, com material específico citado — 2,0
 - [ ] Design Thinking explicado na metodologia (ouvir, prototipar, implementar) — 2,0
-- [ ] Solução final com **imagens** e **melhorias vindas do feedback** → tag `v2.0.0`, tela `/feedback`, painel `/painel` — 3,0
+- [ ] Solução final com **imagens** e **melhorias vindas do feedback** → tag `v2.0.0`, tela `/avaliar`, painel `/painel` — 3,0
 - [ ] Considerações: objetivos, resultados à luz da teoria, limitações, impacto, balanço v1 × v2 — 0,5
 - [ ] Capa (com link do vídeo), sumário, resumo ≤ 250 palavras, ABNT — 1,0
 
@@ -41,6 +41,6 @@ Veja `docs/ROTEIRO_VIDEO.md`.
 | Exigência da banca | Evidência no sistema |
 |---|---|
 | Solução inicial vs. final | tags `v1.0.0` e `v2.0.0`, `CHANGELOG.md` |
-| Melhorias a partir do feedback | tela `/feedback`, campo `versao` em cada avaliação, painel de satisfação |
-| Impacto na comunidade | `/painel` (itens recebidos, cidades, satisfação) |
+| Melhorias a partir do feedback | tela `/avaliar`, campo `versao` em cada avaliação, nota média por versão no painel |
+| Impacto na comunidade | `/painel` (locais registrados, criadouros eliminados, dias até eliminar, bairros pendentes, satisfação) |
 | Funcionando no vídeo | todas as telas são demonstráveis em < 8 min |

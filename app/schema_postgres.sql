@@ -1,19 +1,24 @@
-CREATE TABLE IF NOT EXISTS doacoes (
-    id         SERIAL PRIMARY KEY,
-    item       TEXT    NOT NULL,
-    categoria  TEXT    NOT NULL CHECK (categoria IN ('alimento','higiene','vestuario','outros')),
-    quantidade INTEGER NOT NULL CHECK (quantidade > 0),
-    doador     TEXT,
-    cep        TEXT,
-    cidade     TEXT,
-    uf         TEXT,
-    criado_em  TEXT    NOT NULL DEFAULT to_char(now() AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS')
+-- Registros de possíveis criadouros do Aedes aegypti informados pela comunidade.
+-- Não guarda nome, telefone nem e-mail de quem registra (LGPD: dados mínimos).
+CREATE TABLE IF NOT EXISTS focos (
+    id            SERIAL PRIMARY KEY,
+    tipo          TEXT    NOT NULL CHECK (tipo IN ('pneu','caixa_dagua','vaso_planta','lixo_entulho','piscina','calha','terreno','outros')),
+    descricao     TEXT,
+    logradouro    TEXT    NOT NULL,
+    numero        TEXT,
+    bairro        TEXT    NOT NULL,
+    cep           TEXT,
+    cidade        TEXT,
+    uf            TEXT,
+    status        TEXT    NOT NULL DEFAULT 'aberto' CHECK (status IN ('aberto','vistoriado','eliminado')),
+    criado_em     TEXT    NOT NULL DEFAULT to_char(now() AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS'),
+    atualizado_em TEXT    NOT NULL DEFAULT to_char(now() AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS')
 );
 
-CREATE TABLE IF NOT EXISTS feedbacks (
+CREATE TABLE IF NOT EXISTS avaliacoes (
     id         SERIAL PRIMARY KEY,
     nota       INTEGER NOT NULL CHECK (nota BETWEEN 1 AND 5),
-    perfil     TEXT    NOT NULL CHECK (perfil IN ('doador','voluntario','coordenador')),
+    perfil     TEXT    NOT NULL CHECK (perfil IN ('morador','agente','coordenador')),
     comentario TEXT,
     versao     TEXT    NOT NULL,
     criado_em  TEXT    NOT NULL DEFAULT to_char(now() AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS')

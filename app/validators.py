@@ -1,41 +1,39 @@
 """Validação de dados de entrada (nunca confiar no cliente)."""
 
-CATEGORIAS = ("alimento", "higiene", "vestuario", "outros")
+TIPOS = ("pneu", "caixa_dagua", "vaso_planta", "lixo_entulho", "piscina", "calha", "terreno", "outros")
+STATUS = ("aberto", "vistoriado", "eliminado")
+PERFIS = ("morador", "agente", "coordenador")
 
 
 def _texto(valor):
     return str(valor).strip() if valor is not None else ""
 
 
-def validar_doacao(dados):
+def validar_foco(dados):
     """Retorna (dados_limpos, erros). Se erros não for vazio, rejeitar."""
     if not isinstance(dados, dict):
         return None, {"corpo": "Envie um objeto JSON válido."}
 
     erros = {}
-    item = _texto(dados.get("item"))
-    if not 2 <= len(item) <= 80:
-        erros["item"] = "Informe o item com 2 a 80 caracteres."
+    tipo = _texto(dados.get("tipo")).lower()
+    if tipo not in TIPOS:
+        erros["tipo"] = "Escolha o tipo de criadouro."
 
-    categoria = _texto(dados.get("categoria")).lower()
-    if categoria not in CATEGORIAS:
-        erros["categoria"] = "Escolha: " + ", ".join(CATEGORIAS) + "."
+    descricao = _texto(dados.get("descricao"))
+    if len(descricao) > 300:
+        erros["descricao"] = "Use até 300 caracteres."
 
-    bruto = dados.get("quantidade")
-    quantidade = None
-    if isinstance(bruto, bool):
-        erros["quantidade"] = "Informe um número inteiro."
-    else:
-        try:
-            quantidade = int(bruto)
-            if not 1 <= quantidade <= 100000:
-                raise ValueError
-        except (TypeError, ValueError):
-            erros["quantidade"] = "Informe um número inteiro entre 1 e 100000."
+    logradouro = _texto(dados.get("logradouro"))
+    if not 3 <= len(logradouro) <= 120:
+        erros["logradouro"] = "Informe a rua (3 a 120 caracteres)."
 
-    doador = _texto(dados.get("doador"))
-    if len(doador) > 80:
-        erros["doador"] = "Use até 80 caracteres."
+    numero = _texto(dados.get("numero"))
+    if len(numero) > 10:
+        erros["numero"] = "Use até 10 caracteres (ou deixe em branco)."
+
+    bairro = _texto(dados.get("bairro"))
+    if not 2 <= len(bairro) <= 80:
+        erros["bairro"] = "Informe o bairro (2 a 80 caracteres)."
 
     cep = "".join(c for c in _texto(dados.get("cep")) if c.isdigit())
     if cep and len(cep) != 8:
@@ -49,20 +47,27 @@ def validar_doacao(dados):
     if erros:
         return None, erros
     return {
-        "item": item,
-        "categoria": categoria,
-        "quantidade": quantidade,
-        "doador": doador or None,
+        "tipo": tipo,
+        "descricao": descricao or None,
+        "logradouro": logradouro,
+        "numero": numero or None,
+        "bairro": bairro,
         "cep": cep or None,
         "cidade": cidade or None,
         "uf": uf or None,
     }, {}
 
 
-PERFIS = ("doador", "voluntario", "coordenador")
+def validar_status(dados):
+    if not isinstance(dados, dict):
+        return None, {"corpo": "Envie um objeto JSON válido."}
+    status = _texto(dados.get("status")).lower()
+    if status not in STATUS:
+        return None, {"status": "Escolha: " + ", ".join(STATUS) + "."}
+    return status, {}
 
 
-def validar_feedback(dados):
+def validar_avaliacao(dados):
     if not isinstance(dados, dict):
         return None, {"corpo": "Envie um objeto JSON válido."}
     erros = {}

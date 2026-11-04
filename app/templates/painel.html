@@ -1,34 +1,68 @@
 {% extends "base.html" %}
-{% block titulo %}Painel · Doações Comunitárias{% endblock %}
+{% block titulo %}Painel · Alerta Dengue Comunitário{% endblock %}
 {% block conteudo %}
 <h2>Painel de indicadores</h2>
-<section aria-labelledby="t-resumo">
-  <h3 id="t-resumo">Resumo</h3>
+
+<section aria-labelledby="t-municipio">
+  <h3 id="t-municipio">Situação da dengue no município</h3>
+  <form class="filtro" id="form-municipio" aria-label="Escolher município">
+    <label for="municipio">Município</label>
+    <select id="municipio"></select>
+  </form>
   <div class="grade">
-    <div class="cartao"><p>Doações registradas</p><p class="valor" id="k-registros">–</p></div>
-    <div class="cartao"><p>Itens recebidos</p><p class="valor" id="k-itens">–</p></div>
-    <div class="cartao"><p>Média por doação</p><p class="valor" id="k-media">–</p></div>
-    <div class="cartao"><p>Satisfação (nota 4 ou 5)</p><p class="valor" id="k-satisf">–</p></div>
+    <div class="cartao"><p>Nível de alerta</p><p class="valor" id="k-nivel">–</p></div>
+    <div class="cartao"><p>Casos notificados na última semana</p><p class="valor" id="k-casos">–</p></div>
+    <div class="cartao"><p>Incidência (por 100 mil hab.)</p><p class="valor" id="k-inc">–</p></div>
+  </div>
+  <p id="tendencia"></p>
+  <div id="grafico-casos"></div>
+  <details>
+    <summary>Ver os dados das semanas em tabela</summary>
+    <div class="tabela-wrap" role="region" aria-labelledby="cap-casos" tabindex="0">
+      <table>
+        <caption id="cap-casos">Casos de dengue por semana epidemiológica</caption>
+        <thead><tr><th scope="col">Semana</th><th scope="col">Casos notificados</th>
+          <th scope="col">Casos estimados</th><th scope="col">Nível</th></tr></thead>
+        <tbody id="tab-casos"></tbody>
+      </table>
+    </div>
+  </details>
+  <p class="fonte">Fonte: <a href="https://info.dengue.mat.br" rel="noopener">InfoDengue</a> (Fiocruz/FGV),
+    a partir das notificações do SINAN. As semanas mais recentes ainda podem receber notificações atrasadas.</p>
+</section>
+
+<section aria-labelledby="t-resumo">
+  <h3 id="t-resumo">Registros da comunidade</h3>
+  <div class="grade">
+    <div class="cartao"><p>Locais registrados</p><p class="valor" id="k-total">–</p></div>
+    <div class="cartao"><p>Aguardando vistoria</p><p class="valor" id="k-abertos">–</p></div>
+    <div class="cartao"><p>Criadouros eliminados</p><p class="valor" id="k-elim">–</p></div>
+    <div class="cartao"><p>Dias até eliminar (média)</p><p class="valor" id="k-dias">–</p></div>
   </div>
 </section>
-<section aria-labelledby="t-grafico">
-  <h3 id="t-grafico">Itens recebidos por categoria</h3>
-  <div id="grafico"></div>
-  <div class="tabela-wrap" role="region" aria-labelledby="cap-cat" tabindex="0">
+
+<section aria-labelledby="t-tipos">
+  <h3 id="t-tipos">Tipos de criadouro mais registrados</h3>
+  <div id="grafico-tipos"></div>
+  <div class="tabela-wrap" role="region" aria-labelledby="cap-tipos" tabindex="0">
     <table>
-      <caption id="cap-cat">Dados do gráfico em formato de tabela</caption>
-      <thead><tr><th scope="col">Categoria</th><th scope="col">Itens</th></tr></thead>
-      <tbody id="tab-categorias"></tbody>
+      <caption id="cap-tipos">Dados do gráfico em formato de tabela</caption>
+      <thead><tr><th scope="col">Tipo</th><th scope="col">Registros</th></tr></thead>
+      <tbody id="tab-tipos"></tbody>
     </table>
   </div>
 </section>
-<section aria-labelledby="t-cidades">
-  <h3 id="t-cidades">Cidades com mais doações</h3>
-  <ol id="lista-cidades"></ol>
+
+<section aria-labelledby="t-bairros">
+  <h3 id="t-bairros">Bairros com mais locais pendentes</h3>
+  <ol id="lista-bairros"></ol>
 </section>
+
 <section aria-labelledby="t-notas">
-  <h3 id="t-notas">Avaliações da comunidade</h3>
+  <h3 id="t-notas">Avaliação do sistema pela comunidade</h3>
   <p id="resumo-notas"></p>
 </section>
+<script id="tipos-json" type="application/json">{{ [("pneu","Pneu"),("caixa_dagua","Caixa d'água"),("vaso_planta","Vaso de planta"),
+  ("lixo_entulho","Lixo/entulho"),("piscina","Piscina"),("calha","Calha"),("terreno","Terreno baldio"),("outros","Outros")] | tojson }}</script>
 {% endblock %}
 {% block scripts %}<script src="{{ url_for('static', filename='js/painel.js') }}"></script>{% endblock %}

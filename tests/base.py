@@ -19,7 +19,7 @@ class BaseTestCase(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    def nova_doacao(self, **extra):
-        dados = {"item": "Arroz 5kg", "categoria": "alimento", "quantidade": 10}
+    def novo_foco(self, **extra):
+        dados = {"tipo": "pneu", "logradouro": "Rua das Flores", "numero": "120", "bairro": "Centro"}
         dados.update(extra)
-        return self.client.post("/api/doacoes", json=dados)
+        return self.client.post("/api/focos", json=dados)

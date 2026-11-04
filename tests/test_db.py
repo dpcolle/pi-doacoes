@@ -30,7 +30,7 @@ class SchemasTest(unittest.TestCase):
                 texto = f.read()
             return sorted(l.split()[5] for l in texto.splitlines() if l.startswith("CREATE TABLE"))
         self.assertEqual(tabelas("schema.sql"), tabelas("schema_postgres.sql"))
-        self.assertEqual(tabelas("schema.sql"), ["doacoes", "feedbacks"])
+        self.assertEqual(tabelas("schema.sql"), ["avaliacoes", "focos"])
 
 
 class SaudeTest(BaseTestCase):
@@ -55,22 +55,22 @@ class PostgresIntegracaoTest(unittest.TestCase):
 
     def tearDown(self):
         for id_ in self.ids:
-            self.client.delete(f"/api/doacoes/{id_}")
+            self.client.delete(f"/api/focos/{id_}")
 
     def test_fluxo_completo(self):
         self.assertEqual(self.client.get("/api/saude?db=1").get_json()["banco"], "postgres")
-        r = self.client.post("/api/doacoes", json={"item": "ZZ Teste Integração", "categoria": "outros",
-                                                  "quantidade": 2, "doador": "Maria Teste"})
+        r = self.client.post("/api/focos", json={"tipo": "outros", "logradouro": "ZZ Rua Teste Integração",
+                                                "bairro": "Bairro Teste"})
         self.assertEqual(r.status_code, 201)
         id_ = r.get_json()["id"]
         self.ids.append(id_)
-        self.assertEqual(self.client.get(f"/api/doacoes/{id_}").status_code, 200)
-        achados = self.client.get("/api/doacoes?q=maria teste").get_json()  # busca sem diferenciar maiúsculas
-        self.assertIn(id_, [d["id"] for d in achados])
-        self.assertEqual(self.client.put(f"/api/doacoes/{id_}", json={
-            "item": "ZZ Teste Integração", "categoria": "outros", "quantidade": 9}).get_json()["quantidade"], 9)
+        self.assertEqual(self.client.get(f"/api/focos/{id_}").status_code, 200)
+        achados = self.client.get("/api/focos?q=bairro TESTE").get_json()  # busca sem diferenciar maiúsculas
+        self.assertIn(id_, [f["id"] for f in achados])
+        r = self.client.patch(f"/api/focos/{id_}/status", json={"status": "eliminado"})
+        self.assertEqual(r.get_json()["status"], "eliminado")
         self.assertEqual(self.client.get("/api/estatisticas").status_code, 200)
-        fb = self.client.post("/api/feedbacks", json={"nota": 5, "perfil": "doador"})
-        self.assertEqual(fb.status_code, 201)
-        self.assertEqual(self.client.delete(f"/api/doacoes/{id_}").status_code, 204)
+        av = self.client.post("/api/avaliacoes", json={"nota": 5, "perfil": "morador"})
+        self.assertEqual(av.status_code, 201)
+        self.assertEqual(self.client.delete(f"/api/focos/{id_}").status_code, 204)
         self.ids.remove(id_)

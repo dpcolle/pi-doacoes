@@ -3,18 +3,19 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block titulo %}Doações Comunitárias{% endblock %}</title>
+  <title>{% block titulo %}Alerta Dengue Comunitário{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
   <a class="pular" href="#conteudo">Pular para o conteúdo principal</a>
   <header class="topo">
-    <h1 class="marca">Doações Comunitárias</h1>
+    <h1 class="marca">Alerta Dengue Comunitário</h1>
     <nav aria-label="Principal">
       <ul>
-        <li><a href="/" {% if request.path == '/' %}aria-current="page"{% endif %}>Doações</a></li>
+        <li><a href="/" {% if request.path == '/' %}aria-current="page"{% endif %}>Registrar criadouro</a></li>
         <li><a href="/painel" {% if request.path == '/painel' %}aria-current="page"{% endif %}>Painel</a></li>
-        <li><a href="/feedback" {% if request.path == '/feedback' %}aria-current="page"{% endif %}>Avaliar o sistema</a></li>
+        <li><a href="/prevencao" {% if request.path == '/prevencao' %}aria-current="page"{% endif %}>Prevenção</a></li>
+        <li><a href="/avaliar" {% if request.path == '/avaliar' %}aria-current="page"{% endif %}>Avaliar o sistema</a></li>
       </ul>
     </nav>
     <div class="ferramentas" role="group" aria-label="Ferramentas de acessibilidade">
@@ -28,10 +29,18 @@
   </main>
   <p id="status" class="status" role="status" aria-live="polite"></p>
   <footer class="rodape">
+    <p>Em caso de febre ou sinais de alarme, procure a unidade de saúde mais próxima.</p>
     <p>Projeto Integrador Univesp &middot; versão {{ config['VERSAO'] }}</p>
   </footer>
   <script src="{{ url_for('static', filename='js/common.js') }}"></script>
   <script src="{{ url_for('static', filename='js/acessibilidade.js') }}"></script>
   {% block scripts %}{% endblock %}
+  <!-- VLibras: tradução do conteúdo para Libras (serviço do Governo Federal) -->
+  <div vw class="enabled">
+    <div vw-access-button class="active"></div>
+    <div vw-plugin-wrapper><div class="vw-plugin-top-wrapper"></div></div>
+  </div>
+  <script src="https://vlibras.gov.br/app/vlibras-plugin.js" defer></script>
+  <script>window.addEventListener("load", function () { if (window.VLibras) new window.VLibras.Widget("https://vlibras.gov.br/app"); });</script>
 </body>
 </html>

@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% block titulo %}Avaliar o sistema · Doações Comunitárias{% endblock %}
+{% block titulo %}Avaliar o sistema · Alerta Dengue Comunitário{% endblock %}
 {% block conteudo %}
 <h2>Avalie o sistema</h2>
-<p>Sua opinião orienta as melhorias da próxima versão.</p>
-<form id="form-feedback" novalidate>
+<p>Sua opinião orienta as melhorias da próxima versão. Não pedimos dados pessoais.</p>
+<form id="form-avaliacao" novalidate>
   <fieldset aria-describedby="erro-nota">
     <legend>Nota geral <span aria-hidden="true">*</span></legend>
     {% for n in range(1, 6) %}
@@ -14,18 +14,18 @@
   <div class="campo">
     <label for="perfil">Você é <span aria-hidden="true">*</span></label>
     <select id="perfil" name="perfil" aria-describedby="erro-perfil">
-      <option value="doador">Doador</option>
-      <option value="voluntario">Voluntário</option>
-      <option value="coordenador">Coordenador</option>
+      <option value="morador">Morador(a)</option>
+      <option value="agente">Agente de saúde ou de combate às endemias</option>
+      <option value="coordenador">Coordenação / gestão</option>
     </select>
     <span id="erro-perfil" class="erro"></span>
   </div>
   <div class="campo">
-    <label for="comentario">Comentário (opcional, até 500 caracteres)</label>
+    <label for="comentario">O que melhoraria o sistema? (opcional, até 500 caracteres)</label>
     <textarea id="comentario" name="comentario" rows="4" maxlength="500" aria-describedby="erro-comentario"></textarea>
     <span id="erro-comentario" class="erro"></span>
   </div>
   <button type="submit">Enviar avaliação</button>
 </form>
 {% endblock %}
-{% block scripts %}<script src="{{ url_for('static', filename='js/feedback.js') }}"></script>{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/avaliar.js') }}"></script>{% endblock %}

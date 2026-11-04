@@ -14,6 +14,11 @@ def painel():
     return render_template("painel.html")
 
 
-@bp.get("/feedback")
-def feedback():
-    return render_template("feedback.html")
+@bp.get("/prevencao")
+def prevencao():
+    return render_template("prevencao.html")
+
+
+@bp.get("/avaliar")
+def avaliar():
+    return render_template("avaliar.html")
