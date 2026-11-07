@@ -1,11 +1,24 @@
 "use strict";
 
+/** Código do agente de endemias, guardado só nesta aba do navegador. */
+function codigoAgente() {
+  try { return sessionStorage.getItem("pi-agente") || ""; } catch (_) { return ""; }
+}
+
+function guardarCodigoAgente(codigo) {
+  try {
+    if (codigo) sessionStorage.setItem("pi-agente", codigo);
+    else sessionStorage.removeItem("pi-agente");
+  } catch (_) { /* modo privado: vale só até recarregar */ }
+}
+
 /** Chamada à API própria; lança Error com .detalhes quando a API devolve erro. */
 async function api(caminho, opcoes = {}) {
-  const resposta = await fetch(caminho, {
-    headers: { "Content-Type": "application/json" },
-    ...opcoes,
-  });
+  const cabecalhos = { "Content-Type": "application/json" };
+  const codigo = opcoes.codigo !== undefined ? opcoes.codigo : codigoAgente();
+  if (codigo) cabecalhos["X-Codigo-Agente"] = codigo;
+  const { codigo: _ignorado, ...resto } = opcoes;
+  const resposta = await fetch(caminho, { headers: cabecalhos, ...resto });
   if (resposta.status === 204) return null;
   const corpo = await resposta.json().catch(() => ({}));
   if (!resposta.ok) {

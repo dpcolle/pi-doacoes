@@ -12,3 +12,5 @@ services:
         value: 3.12.3
       - key: DATABASE_URL
         sync: false               # cole a connection string do Neon no painel do Render
+      - key: AGENTE_CODIGO
+        sync: false               # código dos agentes de endemias (não coloque no GitHub)

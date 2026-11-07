@@ -1,5 +1,19 @@
 # Histórico de versões
 
+## 2.0.0 - Solução final: melhorias a partir da avaliação da comunidade
+Mudanças pedidas por quem usou a versão 1.0 (avaliações de 07/11/2026 na tela "Avaliar o sistema"):
+- **Compartilhar nas redes sociais** (sugestão de morador): botões para enviar no WhatsApp,
+  publicar no Facebook, menu de compartilhar do celular e copiar o link, em todas as páginas.
+- **Aviso ao morador pelo WhatsApp** (sugestão de morador): número opcional, só com autorização
+  expressa; nunca aparece na lista pública; o agente abre o WhatsApp com a mensagem pronta e o número
+  é apagado depois do aviso de eliminação (LGPD: consentimento, finalidade e necessidade).
+- **Área do agente protegida por código** (variável `AGENTE_CODIGO`): só o agente muda a situação,
+  exclui registros e vê o botão de aviso. Antes qualquer visitante podia alterar.
+- **Número ou ponto de referência** aceita até 50 caracteres (antes 10), para referências como
+  "ao lado do ecoponto".
+- Migração automática do banco da versão 1.0 (coluna `whatsapp`).
+- 62 testes automatizados.
+
 ## 1.0.0 - Solução inicial: Alerta Dengue Comunitário
 Primeira versão aplicada à comunidade (protótipo para coleta de feedback).
 - Registro de possíveis criadouros do *Aedes aegypti* sem dados pessoais (LGPD), com CEP automático (ViaCEP).

@@ -11,21 +11,70 @@ function celula(texto) {
   return td;
 }
 
-/** Seletor de situação: o agente muda e a alteração é salva na hora. */
-function seletorSituacao(f) {
+/* ---- Modo agente (v2) -----------------------------------------------------------
+ * Só quem tem o código (variável AGENTE_CODIGO no servidor) muda a situação, exclui
+ * e avisa o morador. Os demais veem a situação como texto.
+ */
+const formAgente = document.getElementById("form-agente");
+const agenteAtivo = document.getElementById("agente-ativo");
+let modoAgente = false;
+
+function aplicarModoAgente(ativo) {
+  modoAgente = ativo;
+  formAgente.hidden = ativo;
+  agenteAtivo.hidden = !ativo;
+  carregar();
+}
+
+formAgente.addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const campo = document.getElementById("codigo-agente");
+  const erro = document.getElementById("erro-codigo-agente");
+  erro.textContent = "";
+  campo.removeAttribute("aria-invalid");
+  try {
+    await api("/api/agente/entrar", { method: "POST", codigo: campo.value });
+    guardarCodigoAgente(campo.value);
+    campo.value = "";
+    aplicarModoAgente(true);
+    avisar("Modo agente ativo.");
+    document.getElementById("sair-agente").focus();
+  } catch (e) {
+    erro.textContent = e.message;
+    campo.setAttribute("aria-invalid", "true");
+    campo.focus();
+  }
+});
+
+document.getElementById("sair-agente").addEventListener("click", () => {
+  guardarCodigoAgente("");
+  aplicarModoAgente(false);
+  avisar("Você saiu do modo agente.");
+  document.getElementById("codigo-agente").focus();
+});
+
+/** Público: a situação como texto. Agente: seletor que salva na hora. */
+function celulaSituacao(f) {
   const td = document.createElement("td");
+  if (!modoAgente) {
+    const span = document.createElement("span");
+    span.className = "situacao-texto situacao-" + f.status;
+    span.textContent = SITUACOES[f.status];
+    td.append(span);
+    return td;
+  }
   const sel = document.createElement("select");
   sel.setAttribute("aria-label", `Situação do registro em ${f.logradouro}, ${f.bairro}`);
   sel.className = "situacao situacao-" + f.status;
   for (const [valor, nome] of Object.entries(SITUACOES)) {
-    const op = new Option(nome, valor, false, valor === f.status);
-    sel.append(op);
+    sel.append(new Option(nome, valor, false, valor === f.status));
   }
   sel.addEventListener("change", async () => {
     try {
       await api(`/api/focos/${f.id}/status`, { method: "PATCH", body: JSON.stringify({ status: sel.value }) });
+      f.status = sel.value;
       sel.className = "situacao situacao-" + sel.value;
-      avisar(`Situação alterada para ${SITUACOES[sel.value]}.`);
+      avisar(`Situação alterada para ${SITUACOES[sel.value]}.` + (f.tem_contato ? " Avise o morador pelo WhatsApp." : ""));
     } catch (e) {
       sel.value = f.status;
       avisar(e.message, "erro");
@@ -33,6 +82,26 @@ function seletorSituacao(f) {
   });
   td.append(sel);
   return td;
+}
+
+/** Abre o WhatsApp com a mensagem pronta. No aviso final (eliminado), apaga o número. */
+async function avisarMorador(f, botao, endereco) {
+  const janela = window.open("about:blank", "_blank"); // aberta no clique, para não ser bloqueada
+  try {
+    const { link, status } = await api(`/api/focos/${f.id}/contato`);
+    if (janela) janela.location.href = link; else window.location.href = link;
+    if (status === "eliminado") {
+      await api(`/api/focos/${f.id}/contato`, { method: "DELETE" });
+      f.tem_contato = false;
+      botao.remove();
+      avisar(`WhatsApp aberto para o registro em ${endereco}. Como foi o aviso final, o número foi apagado do sistema.`);
+    } else {
+      avisar(`WhatsApp aberto para o registro em ${endereco}. O número fica guardado até o aviso de eliminação.`);
+    }
+  } catch (e) {
+    if (janela) janela.close();
+    avisar(e.message, "erro");
+  }
 }
 
 function linha(f) {
@@ -44,11 +113,21 @@ function linha(f) {
     const p = document.createElement("small");
     p.className = "descricao";
     p.textContent = f.descricao;
-    tdTipo.append(document.createElement("br"), p);
+    tdTipo.append(p);
   }
   tr.append(tdTipo, celula(endereco), celula(local ? `${f.bairro} (${local})` : f.bairro),
-            celula(formatarData(f.criado_em)), seletorSituacao(f));
+            celula(formatarData(f.criado_em)), celulaSituacao(f));
+  if (!modoAgente) return tr;
   const acoes = document.createElement("td");
+  acoes.className = "acoes";
+  if (f.tem_contato) {
+    const zap = document.createElement("button");
+    zap.type = "button";
+    zap.textContent = "Avisar no WhatsApp";
+    zap.setAttribute("aria-label", `Avisar no WhatsApp o morador do registro em ${endereco}`);
+    zap.addEventListener("click", () => avisarMorador(f, zap, endereco));
+    acoes.append(zap);
+  }
   const botao = document.createElement("button");
   botao.type = "button";
   botao.className = "perigo";
@@ -67,12 +146,13 @@ async function carregar() {
   if (q) params.set("q", q);
   if (status) params.set("status", status);
   try {
+    document.getElementById("col-acoes").hidden = !modoAgente;
     const dados = await api("/api/focos?" + params);
     corpo.replaceChildren(...dados.map(linha));
     if (!dados.length) {
       const tr = document.createElement("tr");
       const td = celula("Nenhum registro encontrado.");
-      td.colSpan = 6;
+      td.colSpan = modoAgente ? 6 : 5;
       tr.append(td);
       corpo.append(tr);
     }
@@ -163,7 +243,7 @@ form.addEventListener("submit", async (ev) => {
     await api("/api/focos", { method: "POST", body: JSON.stringify(dados) });
     form.reset();
     cepPreenchido = "";
-    avisar("Obrigado! O local foi registrado para a equipe de combate às endemias.");
+    avisar("Obrigado! O local foi registrado para a equipe de combate às endemias. Compartilhe o site com seus vizinhos.");
     document.getElementById("tipo").focus();
     carregar();
   } catch (e) {
@@ -181,4 +261,10 @@ document.getElementById("form-filtro").addEventListener("submit", (ev) => {
   carregar();
 });
 
-carregar();
+if (codigoAgente()) {
+  api("/api/agente/entrar", { method: "POST" })
+    .then(() => aplicarModoAgente(true))
+    .catch(() => { guardarCodigoAgente(""); carregar(); });
+} else {
+  carregar();
+}

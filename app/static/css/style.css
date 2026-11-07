@@ -57,3 +57,17 @@ section { margin-bottom: 2rem; }
 /* Situação: além da cor, o texto da opção diz o estado */
 select.situacao-aberto { border-color: var(--erro); }
 select.situacao-eliminado { border-color: var(--ok); }
+/* v2 */
+.divulgar { max-width: 60rem; margin: 0 auto 2rem; padding: 1rem 1.5rem; border-top: 2px solid var(--borda); }
+.divulgar h2 { font-size: 1.2rem; margin: .5rem 0; }
+.botoes, .acoes { display: flex; flex-wrap: wrap; gap: .5rem; }
+a.botao { display: inline-block; padding: .5rem .8rem; border: 2px solid var(--primaria); border-radius: 6px;
+          background: var(--primaria); color: var(--primaria-texto); font-weight: 600; text-decoration: none; }
+label.caixa { display: flex; gap: .5rem; align-items: flex-start; max-width: 28rem; }
+label.caixa input { margin-top: .3rem; }
+small { display: block; }
+.agente { margin-bottom: 1rem; }
+.situacao-texto { font-weight: 600; padding: .1rem .5rem; border: 2px solid var(--borda); border-radius: 6px; white-space: nowrap; }
+.situacao-texto.situacao-aberto { border-color: var(--erro); }
+.situacao-texto.situacao-eliminado { border-color: var(--ok); }
+[hidden] { display: none !important; }

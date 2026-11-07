@@ -28,7 +28,7 @@ class ApiFocosTest(BaseTestCase):
     def test_listar_com_filtros(self):
         self.novo_foco()
         id2 = self.novo_foco(tipo="calha", bairro="Jardim América").get_json()["id"]
-        self.client.patch(f"/api/focos/{id2}/status", json={"status": "eliminado"})
+        self.client.patch(f"/api/focos/{id2}/status", json={"status": "eliminado"}, headers=self.AGENTE)
         self.assertEqual(len(self.client.get("/api/focos").get_json()), 2)
         abertos = self.client.get("/api/focos?status=aberto").get_json()
         self.assertEqual([f["bairro"] for f in abertos], ["Centro"])
@@ -39,31 +39,32 @@ class ApiFocosTest(BaseTestCase):
 
     def test_mudar_status(self):
         id_ = self.novo_foco().get_json()["id"]
-        r = self.client.patch(f"/api/focos/{id_}/status", json={"status": "vistoriado"})
+        r = self.client.patch(f"/api/focos/{id_}/status", json={"status": "vistoriado"}, headers=self.AGENTE)
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.get_json()["status"], "vistoriado")
 
     def test_status_invalido(self):
         id_ = self.novo_foco().get_json()["id"]
-        r = self.client.patch(f"/api/focos/{id_}/status", json={"status": "resolvido?"})
+        r = self.client.patch(f"/api/focos/{id_}/status", json={"status": "resolvido?"}, headers=self.AGENTE)
         self.assertEqual(r.status_code, 400)
         self.assertIn("status", r.get_json()["detalhes"])
 
     def test_atualizar(self):
         id_ = self.novo_foco().get_json()["id"]
         r = self.client.put(f"/api/focos/{id_}",
-                            json={"tipo": "piscina", "logradouro": "Rua das Flores", "bairro": "Vila Nova"})
+                            json={"tipo": "piscina", "logradouro": "Rua das Flores", "bairro": "Vila Nova"},
+                            headers=self.AGENTE)
         self.assertEqual((r.get_json()["tipo"], r.get_json()["bairro"]), ("piscina", "Vila Nova"))
 
     def test_remover(self):
         id_ = self.novo_foco().get_json()["id"]
-        self.assertEqual(self.client.delete(f"/api/focos/{id_}").status_code, 204)
+        self.assertEqual(self.client.delete(f"/api/focos/{id_}", headers=self.AGENTE).status_code, 204)
         self.assertEqual(self.client.get(f"/api/focos/{id_}").status_code, 404)
 
     def test_inexistente_retorna_404(self):
         self.assertEqual(self.client.get("/api/focos/999").status_code, 404)
-        self.assertEqual(self.client.delete("/api/focos/999").status_code, 404)
-        self.assertEqual(self.client.patch("/api/focos/999/status", json={"status": "aberto"}).status_code, 404)
+        self.assertEqual(self.client.delete("/api/focos/999", headers=self.AGENTE).status_code, 404)
+        self.assertEqual(self.client.patch("/api/focos/999/status", json={"status": "aberto"}, headers=self.AGENTE).status_code, 404)
 
     def test_sql_injection_nao_funciona(self):
         self.novo_foco()

@@ -18,7 +18,7 @@ class ValidarFocoTest(unittest.TestCase):
 
     def test_limites_de_tamanho(self):
         _, erros = validar_foco({"tipo": "pneu", "logradouro": "R" * 121, "bairro": "B",
-                                 "numero": "1" * 11, "descricao": "x" * 301})
+                                 "numero": "1" * 51, "descricao": "x" * 301})
         self.assertEqual(set(erros), {"logradouro", "bairro", "numero", "descricao"})
 
     def test_cep_e_uf_invalidos(self):

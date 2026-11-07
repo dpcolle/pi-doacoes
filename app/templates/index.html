@@ -6,7 +6,7 @@
 {% block conteudo %}
 <h2>Registrar possível criadouro do mosquito</h2>
 <p>Viu água parada que pode virar criadouro do <i>Aedes aegypti</i>? Registre o local para a equipe de
-  combate às endemias. <strong>Não pedimos seu nome nem telefone.</strong></p>
+  combate às endemias. <strong>Não pedimos seu nome. O WhatsApp é opcional.</strong></p>
 <form id="form-foco" novalidate>
   <div class="campo">
     <label for="tipo">Tipo de criadouro <span aria-hidden="true">*</span></label>
@@ -28,7 +28,8 @@
   </div>
   <div class="campo">
     <label for="numero">Número ou ponto de referência</label>
-    <input id="numero" name="numero" maxlength="10" aria-describedby="erro-numero">
+    <input id="numero" name="numero" maxlength="50" aria-describedby="erro-numero"
+      placeholder="Ex.: 120, ou em frente à escola">
     <span id="erro-numero" class="erro"></span>
   </div>
   <div class="campo">
@@ -52,11 +53,34 @@
       placeholder="Ex.: pneus no quintal dos fundos, visíveis da calçada"></textarea>
     <span id="erro-descricao" class="erro"></span>
   </div>
+  <fieldset>
+    <legend>Quer receber um aviso quando o local for resolvido? (opcional)</legend>
+    <div class="campo">
+      <label for="whatsapp">WhatsApp com DDD</label>
+      <input id="whatsapp" name="whatsapp" type="tel" inputmode="tel" maxlength="20" autocomplete="tel"
+        placeholder="(18) 99999-9999" aria-describedby="ajuda-whatsapp erro-whatsapp">
+      <small id="ajuda-whatsapp">Usado só para avisar sobre este registro. Não aparece na lista
+        e é apagado depois do aviso final.</small>
+      <span id="erro-whatsapp" class="erro"></span>
+    </div>
+    <label class="caixa"><input type="checkbox" id="aceite_contato" name="aceite_contato" aria-describedby="erro-aceite_contato">
+      Autorizo a equipe de combate às endemias a me avisar por WhatsApp sobre este registro.</label>
+    <span id="erro-aceite_contato" class="erro"></span>
+  </fieldset>
   <button type="submit">Registrar</button>
 </form>
 
 <h2>Registros</h2>
-<p>Agentes de endemias: atualizem a situação de cada local depois da vistoria.</p>
+<div class="agente">
+  <form id="form-agente" class="filtro" aria-label="Entrar como agente de endemias">
+    <label for="codigo-agente">Agente de endemias? Código</label>
+    <input id="codigo-agente" type="password" autocomplete="off" aria-describedby="erro-codigo-agente">
+    <button type="submit" class="secundario">Entrar</button>
+    <span id="erro-codigo-agente" class="erro"></span>
+  </form>
+  <p id="agente-ativo" hidden><strong>Modo agente ativo:</strong> atualize a situação e avise o morador.
+    <button type="button" class="secundario" id="sair-agente">Sair</button></p>
+</div>
 <form id="form-filtro" class="filtro" role="search" aria-label="Filtrar registros">
   <label for="filtro-q">Buscar</label>
   <input id="filtro-q" type="search" placeholder="Rua ou bairro">
@@ -74,7 +98,7 @@
     <caption id="titulo-tabela">Possíveis criadouros registrados</caption>
     <thead>
       <tr><th scope="col">Tipo</th><th scope="col">Endereço</th><th scope="col">Bairro</th>
-          <th scope="col">Registrado em</th><th scope="col">Situação</th><th scope="col">Ações</th></tr>
+          <th scope="col">Registrado em</th><th scope="col">Situação</th><th scope="col" id="col-acoes" hidden>Ações</th></tr>
     </thead>
     <tbody id="corpo-tabela"></tbody>
   </table>

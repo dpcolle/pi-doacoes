@@ -5,7 +5,7 @@ from flask import Flask
 
 from . import db
 
-__version__ = "1.0.0"
+__version__ = "2.0.0"
 
 # Municípios do grupo (código IBGE). Pode ser trocado pela variável MUNICIPIOS,
 # no formato "Nome:codigo;Nome:codigo".
@@ -29,6 +29,7 @@ def create_app(config=None):
         ),
         DATABASE_URL=os.environ.get("DATABASE_URL"),  # PostgreSQL (Neon); vazio = SQLite
         VERSAO=__version__,
+        AGENTE_CODIGO=os.environ.get("AGENTE_CODIGO"),  # libera a área do agente de endemias
         MUNICIPIOS=_ler_municipios(os.environ.get("MUNICIPIOS", MUNICIPIOS_PADRAO)),
     )
     app.json.ensure_ascii = False

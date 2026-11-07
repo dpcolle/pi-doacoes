@@ -1,4 +1,7 @@
 """API REST própria do sistema (JSON)."""
+import hmac
+from urllib.parse import quote
+
 from flask import Blueprint, current_app, jsonify, request
 
 from . import analytics
@@ -22,6 +25,30 @@ def _erro(mensagem, status, detalhes=None):
 
 def _buscar(foco_id):
     return get_db().execute("SELECT * FROM focos WHERE id = :id", {"id": foco_id}).fetchone()
+
+
+def _publico(linha):
+    """Registro como a API mostra a qualquer pessoa: o WhatsApp nunca sai, só se existe."""
+    dados = dict(linha)
+    dados["tem_contato"] = bool(dados.pop("whatsapp", None))
+    return dados
+
+
+def _exige_agente():
+    """Ações de agente de endemias exigem o código definido em AGENTE_CODIGO."""
+    codigo = current_app.config.get("AGENTE_CODIGO")
+    if not codigo:
+        return _erro("Área do agente não configurada. Defina a variável AGENTE_CODIGO no servidor.", 503)
+    enviado = request.headers.get("X-Codigo-Agente", "")
+    if not hmac.compare_digest(enviado.encode(), codigo.encode()):
+        return _erro("Código do agente inválido.", 401)
+    return None
+
+
+@bp.post("/agente/entrar")
+def agente_entrar():
+    negado = _exige_agente()
+    return negado or ("", 204)
 
 
 @bp.get("/saude")
@@ -56,7 +83,7 @@ def listar():
         params["busca"] = f"%{busca}%"
     sql += " ORDER BY id DESC"
     linhas = get_db().execute(sql, params).fetchall()
-    return jsonify([dict(l) for l in linhas])
+    return jsonify([_publico(l) for l in linhas])
 
 
 @bp.post("/focos")
@@ -66,12 +93,12 @@ def criar():
         return _erro("Dados inválidos.", 400, erros)
     banco = get_db()
     linha = banco.execute(
-        "INSERT INTO focos (tipo, descricao, logradouro, numero, bairro, cep, cidade, uf) "
-        "VALUES (:tipo, :descricao, :logradouro, :numero, :bairro, :cep, :cidade, :uf) RETURNING *",
+        "INSERT INTO focos (tipo, descricao, logradouro, numero, bairro, cep, cidade, uf, whatsapp) "
+        "VALUES (:tipo, :descricao, :logradouro, :numero, :bairro, :cep, :cidade, :uf, :whatsapp) RETURNING *",
         dados,
     ).fetchone()
     banco.commit()
-    resposta = jsonify(dict(linha))
+    resposta = jsonify(_publico(linha))
     resposta.status_code = 201
     resposta.headers["Location"] = f"/api/focos/{linha['id']}"
     return resposta
@@ -82,11 +109,14 @@ def detalhar(foco_id):
     linha = _buscar(foco_id)
     if linha is None:
         return _erro("Registro não encontrado.", 404)
-    return jsonify(dict(linha))
+    return jsonify(_publico(linha))
 
 
 @bp.put("/focos/<int:foco_id>")
 def atualizar(foco_id):
+    negado = _exige_agente()
+    if negado:
+        return negado
     if _buscar(foco_id) is None:
         return _erro("Registro não encontrado.", 404)
     dados, erros = validar_foco(request.get_json(silent=True))
@@ -100,12 +130,15 @@ def atualizar(foco_id):
         {**dados, "id": foco_id},
     )
     banco.commit()
-    return jsonify(dict(_buscar(foco_id)))
+    return jsonify(_publico(_buscar(foco_id)))
 
 
 @bp.patch("/focos/<int:foco_id>/status")
 def mudar_status(foco_id):
     """Usado pelo agente de endemias: aberto -> vistoriado -> eliminado."""
+    negado = _exige_agente()
+    if negado:
+        return negado
     if _buscar(foco_id) is None:
         return _erro("Registro não encontrado.", 404)
     status, erros = validar_status(request.get_json(silent=True))
@@ -117,15 +150,58 @@ def mudar_status(foco_id):
         {"status": status, "id": foco_id},
     )
     banco.commit()
-    return jsonify(dict(_buscar(foco_id)))
+    return jsonify(_publico(_buscar(foco_id)))
 
 
 @bp.delete("/focos/<int:foco_id>")
 def remover(foco_id):
+    negado = _exige_agente()
+    if negado:
+        return negado
     if _buscar(foco_id) is None:
         return _erro("Registro não encontrado.", 404)
     banco = get_db()
     banco.execute("DELETE FROM focos WHERE id = :id", {"id": foco_id})
+    banco.commit()
+    return "", 204
+
+
+# ---- v2: aviso ao morador pelo WhatsApp ---------------------------------------
+_MENSAGENS = {
+    "aberto": "o local que você registrou em {local} foi recebido e aguarda vistoria",
+    "vistoriado": "o local que você registrou em {local} foi vistoriado",
+    "eliminado": "o criadouro que você registrou em {local} foi eliminado",
+}
+
+
+@bp.get("/focos/<int:foco_id>/contato")
+def contato(foco_id):
+    """Só para o agente: devolve o link do WhatsApp com a mensagem pronta."""
+    negado = _exige_agente()
+    if negado:
+        return negado
+    linha = _buscar(foco_id)
+    if linha is None:
+        return _erro("Registro não encontrado.", 404)
+    if not linha["whatsapp"]:
+        return _erro("Este registro não tem WhatsApp para aviso.", 404)
+    local = ", ".join(p for p in (linha["logradouro"], linha["numero"], linha["bairro"]) if p)
+    texto = ("Olá! Aqui é a equipe de combate à dengue. Informamos que "
+             + _MENSAGENS[linha["status"]].format(local=local)
+             + ". Obrigado por ajudar a proteger o bairro!")
+    return jsonify({"link": f"https://wa.me/{linha['whatsapp']}?text={quote(texto)}", "status": linha["status"]})
+
+
+@bp.delete("/focos/<int:foco_id>/contato")
+def apagar_contato(foco_id):
+    """Apaga o WhatsApp depois do aviso final: o dado não é guardado além do necessário."""
+    negado = _exige_agente()
+    if negado:
+        return negado
+    if _buscar(foco_id) is None:
+        return _erro("Registro não encontrado.", 404)
+    banco = get_db()
+    banco.execute("UPDATE focos SET whatsapp = NULL WHERE id = :id", {"id": foco_id})
     banco.commit()
     return "", 204
 

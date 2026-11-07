@@ -28,12 +28,23 @@
     {% block conteudo %}{% endblock %}
   </main>
   <p id="status" class="status" role="status" aria-live="polite"></p>
+  <aside class="divulgar" aria-labelledby="t-divulgar">
+    <h2 id="t-divulgar">Ajude a divulgar</h2>
+    <p>Quanto mais vizinhos usarem o site, mais criadouros são encontrados.</p>
+    <div class="botoes">
+      <button type="button" id="compartilhar" hidden>Compartilhar</button>
+      <a class="botao" id="share-whatsapp" href="https://wa.me/" target="_blank" rel="noopener">Enviar no WhatsApp</a>
+      <a class="botao" id="share-facebook" href="https://www.facebook.com/sharer/sharer.php" target="_blank" rel="noopener">Publicar no Facebook</a>
+      <button type="button" class="secundario" id="copiar-link">Copiar link</button>
+    </div>
+  </aside>
   <footer class="rodape">
     <p>Em caso de febre ou sinais de alarme, procure a unidade de saúde mais próxima.</p>
     <p>Projeto Integrador Univesp &middot; versão {{ config['VERSAO'] }}</p>
   </footer>
   <script src="{{ url_for('static', filename='js/common.js') }}"></script>
   <script src="{{ url_for('static', filename='js/acessibilidade.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/compartilhar.js') }}"></script>
   {% block scripts %}{% endblock %}
   <!-- VLibras: tradução do conteúdo para Libras (serviço do Governo Federal) -->
   <div vw class="enabled">

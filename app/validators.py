@@ -9,6 +9,22 @@ def _texto(valor):
     return str(valor).strip() if valor is not None else ""
 
 
+def _aceite(valor):
+    return valor is True or str(valor).strip().lower() in ("on", "true", "1", "sim")
+
+
+def normalizar_whatsapp(valor):
+    """Devolve 55+DDD+número, None se vazio, ou False se inválido."""
+    digitos = "".join(c for c in _texto(valor) if c.isdigit())
+    if not digitos:
+        return None
+    if len(digitos) in (12, 13) and digitos.startswith("55"):
+        digitos = digitos[2:]
+    if len(digitos) not in (10, 11) or digitos[0] == "0":
+        return False
+    return "55" + digitos
+
+
 def validar_foco(dados):
     """Retorna (dados_limpos, erros). Se erros não for vazio, rejeitar."""
     if not isinstance(dados, dict):
@@ -28,8 +44,8 @@ def validar_foco(dados):
         erros["logradouro"] = "Informe a rua (3 a 120 caracteres)."
 
     numero = _texto(dados.get("numero"))
-    if len(numero) > 10:
-        erros["numero"] = "Use até 10 caracteres (ou deixe em branco)."
+    if len(numero) > 50:
+        erros["numero"] = "Use até 50 caracteres (ou deixe em branco)."
 
     bairro = _texto(dados.get("bairro"))
     if not 2 <= len(bairro) <= 80:
@@ -44,9 +60,17 @@ def validar_foco(dados):
     if uf and (len(uf) != 2 or not uf.isalpha()):
         erros["uf"] = "Use a sigla com 2 letras."
 
+    # v2: WhatsApp opcional, só com autorização expressa (LGPD: consentimento e finalidade)
+    whatsapp = normalizar_whatsapp(dados.get("whatsapp"))
+    if whatsapp is False:
+        erros["whatsapp"] = "Informe o WhatsApp com DDD, por exemplo (18) 99999-9999."
+    elif whatsapp and not _aceite(dados.get("aceite_contato")):
+        erros["aceite_contato"] = "Marque a autorização para receber o aviso pelo WhatsApp."
+
     if erros:
         return None, erros
     return {
+        "whatsapp": whatsapp or None,
         "tipo": tipo,
         "descricao": descricao or None,
         "logradouro": logradouro,

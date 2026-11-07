@@ -77,3 +77,15 @@ def init_db():
     arquivo = "schema_postgres.sql" if banco.dialeto == "postgres" else "schema.sql"
     with current_app.open_resource(arquivo) as f:
         banco.executar_script(f.read().decode("utf-8"))
+    migrar(banco)
+
+
+def migrar(banco):
+    """Atualiza bancos criados por versões anteriores (o CREATE TABLE IF NOT EXISTS não altera tabelas)."""
+    if banco.dialeto == "postgres":
+        banco.execute("ALTER TABLE focos ADD COLUMN IF NOT EXISTS whatsapp TEXT")
+    else:
+        colunas = [linha["name"] for linha in banco.execute("PRAGMA table_info(focos)").fetchall()]
+        if "whatsapp" not in colunas:
+            banco.execute("ALTER TABLE focos ADD COLUMN whatsapp TEXT")
+    banco.commit()

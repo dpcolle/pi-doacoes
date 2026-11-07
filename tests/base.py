@@ -12,12 +12,15 @@ class BaseTestCase(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.app = create_app(
             {"TESTING": True, "DATABASE": os.path.join(self.tmp.name, "teste.sqlite"),
-             "DATABASE_URL": None}  # nunca usar o banco de produção nos testes
+             "DATABASE_URL": None,  # nunca usar o banco de produção nos testes
+             "AGENTE_CODIGO": "codigo-teste"}
         )
         self.client = self.app.test_client()
 
     def tearDown(self):
         self.tmp.cleanup()
+
+    AGENTE = {"X-Codigo-Agente": "codigo-teste"}
 
     def novo_foco(self, **extra):
         dados = {"tipo": "pneu", "logradouro": "Rua das Flores", "numero": "120", "bairro": "Centro"}
