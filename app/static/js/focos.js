@@ -189,6 +189,26 @@ function erroCep(mensagem) {
   campoCep.setAttribute("aria-invalid", "true");
 }
 
+/* Pergunta ao servidor; se ele não alcançar as APIs (erro 502), o navegador
+ * consulta a ViaCEP diretamente, que aceita chamadas de outros sites (CORS). */
+async function buscarCep(cep) {
+  try {
+    return await api("/api/cep/" + cep);
+  } catch (e) {
+    if (e.status !== 502) throw e;
+    let d;
+    try {
+      const r = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      d = await r.json();
+    } catch (_) {
+      throw e;
+    }
+    if (!d || d.erro) throw new Error("CEP não encontrado.");
+    return { cep, logradouro: d.logradouro || "", bairro: d.bairro || "",
+             cidade: d.localidade || "", uf: d.uf || "" };
+  }
+}
+
 function consultarCep() {
   const cep = soDigitos(campoCep.value);
   if (cep.length !== 8) return Promise.resolve(false);
@@ -197,7 +217,7 @@ function consultarCep() {
 
   const promessa = (async () => {
     try {
-      const d = await api("/api/cep/" + cep);
+      const d = await buscarCep(cep);
       if (soDigitos(campoCep.value) !== cep) return false;
       const el = form.elements;
       if (d.logradouro && !el.logradouro.value.trim()) el.logradouro.value = d.logradouro;

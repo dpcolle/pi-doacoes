@@ -41,3 +41,28 @@ class CepRotaTest(BaseTestCase):
     def test_rota_propaga_falha_da_api_externa(self):
         self.app.config["CEP_CONSULTOR"] = FALSO_FORA_DO_AR
         self.assertEqual(self.client.get("/api/cep/16200000").status_code, 502)
+
+
+class CepProvedoresTest(unittest.TestCase):
+    def test_usa_segunda_api_quando_a_primeira_falha(self):
+        import urllib.error
+        from app.cep import _consultar_apis
+
+        def fora(cep, timeout):
+            raise urllib.error.URLError("sem rede")
+
+        def ok(cep, timeout):
+            return {"localidade": "Guararapes", "uf": "SP"}
+
+        self.assertEqual(_consultar_apis("16700000", provedores=(fora, ok))["localidade"], "Guararapes")
+
+    def test_todas_as_apis_falham(self):
+        import urllib.error
+        from app.cep import _consultar_apis
+
+        def fora(cep, timeout):
+            raise TimeoutError()
+
+        with self.assertRaises(CepErro) as ctx:
+            _consultar_apis("16700000", provedores=(fora, fora))
+        self.assertEqual(ctx.exception.status, 502)
