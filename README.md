@@ -9,6 +9,7 @@
 | Nome | RA | Polo |
 |---|---|---|
 | Diego Ettore Colle | 2005387 | Guararapes SP |
+| Douglas Silva Almeida | 24214238 | Barbosa SP |
 
 Sistema web para a comunidade **registrar possíveis criadouros do *Aedes aegypti*** (sem informar
 dados pessoais) e para a equipe de combate às endemias **acompanhar a vistoria** de cada local
