@@ -58,7 +58,7 @@ Sem a variável `DATABASE_URL`, o sistema usa SQLite local. Para usar o Neon, ve
 
 ### Municípios do painel
 
-Por padrão: Murutinga do Sul (3532108), Guararapes (3518206) e Penápolis (3537305).
+Por padrão: Barbosa (3505104), Guararapes (3518206) e Penápolis (3537305).
 Para trocar, defina a variável `MUNICIPIOS` no formato `Nome:codigoIBGE;Nome:codigoIBGE`.
 
 ### Área do agente

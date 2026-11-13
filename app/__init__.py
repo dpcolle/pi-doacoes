@@ -9,7 +9,7 @@ __version__ = "2.0.0"
 
 # Municípios do grupo (código IBGE). Pode ser trocado pela variável MUNICIPIOS,
 # no formato "Nome:codigo;Nome:codigo".
-MUNICIPIOS_PADRAO = "Murutinga do Sul:3532108;Guararapes:3518206;Penápolis:3537305"
+MUNICIPIOS_PADRAO = "Barbosa:3505104;Guararapes:3518206;Penápolis:3537305"
 
 
 def _ler_municipios(texto):
